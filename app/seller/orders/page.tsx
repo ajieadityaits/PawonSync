@@ -9,8 +9,10 @@ export const dynamic = "force-dynamic";
 
 export default async function SellerOrdersPage() {
   const orders = await getOrders();
-  const todayOrders = orders.slice(0, 2);
-  const upcomingOrders = orders.slice(1, 3);
+  const activeOrders = orders.filter((order) => order.status !== "selesai");
+  const historyOrders = orders.filter((order) => order.status === "selesai");
+  const todayOrders = activeOrders.slice(0, 2);
+  const upcomingOrders = activeOrders.slice(2, 4);
 
   return (
     <MobileAppShell role="seller" showBack title="Pesanan Aktif">
@@ -24,7 +26,7 @@ export default async function SellerOrdersPage() {
       <section className="mt-5 px-4">
         <h2 className="text-xs font-black uppercase text-cocoa-500">Hari Ini</h2>
         <div className="mt-3 grid gap-3">
-          {todayOrders.map((order) => (
+          {todayOrders.length ? todayOrders.map((order) => (
             <Link
               className="rounded-2xl border border-cocoa-100 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft"
               href={`/seller/orders/${order.id}`}
@@ -42,11 +44,16 @@ export default async function SellerOrdersPage() {
                 <StatusBadge compact status={order.status} />
               </div>
             </Link>
-          ))}
+          )) : (
+            <p className="rounded-2xl border border-cocoa-100 bg-white p-4 text-sm font-semibold text-cocoa-500 shadow-sm">
+              Belum ada pesanan aktif hari ini.
+            </p>
+          )}
         </div>
       </section>
 
-      <section className="mt-6 px-4">
+      {upcomingOrders.length ? (
+        <section className="mt-6 px-4">
         <h2 className="text-xs font-black uppercase text-cocoa-500">Mendatang</h2>
         <div className="mt-3 grid gap-3">
           {upcomingOrders.map((order) => (
@@ -61,6 +68,34 @@ export default async function SellerOrdersPage() {
               </p>
             </Link>
           ))}
+        </div>
+        </section>
+      ) : null}
+
+      <section className="mt-6 px-4">
+        <h2 className="text-xs font-black uppercase text-cocoa-500">Riwayat Selesai</h2>
+        <div className="mt-3 grid gap-3">
+          {historyOrders.length ? historyOrders.map((order) => (
+            <Link
+              className="rounded-2xl border border-cocoa-100 bg-white/75 p-4 shadow-sm transition hover:-translate-y-0.5 hover:shadow-soft"
+              href={`/seller/orders/${order.id}`}
+              key={order.id}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <h3 className="truncate font-black text-cocoa-800">{order.eventName}</h3>
+                  <p className="mt-1 text-sm font-semibold text-cocoa-500">
+                    Bu {order.buyerName} • {order.portions} porsi • {formatDate(order.eventDate)}
+                  </p>
+                </div>
+                <StatusBadge compact status={order.status} />
+              </div>
+            </Link>
+          )) : (
+            <p className="rounded-2xl border border-cocoa-100 bg-white/75 p-4 text-sm font-semibold text-cocoa-500 shadow-sm">
+              Pesanan selesai akan muncul di sini.
+            </p>
+          )}
         </div>
       </section>
     </MobileAppShell>

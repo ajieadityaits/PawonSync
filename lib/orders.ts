@@ -199,3 +199,22 @@ export async function updateOrderToNextStatus(id: string, currentStatus: OrderSt
 
   return nextStatus;
 }
+
+export async function completeBuyerOrder(id: string) {
+  if (!isSupabaseConfigured) {
+    throw new Error("Supabase belum dikonfigurasi, jadi konfirmasi pesanan belum bisa disimpan.");
+  }
+
+  const completedStatus: OrderStatus = "selesai";
+  const { error } = await supabase.from("orders").update({ status: completedStatus }).eq("id", id);
+
+  if (error) throw friendlyOrderError(error);
+
+  await supabase.from("order_status_logs").insert({
+    order_id: id,
+    status: completedStatus,
+    description: "Buyer mengonfirmasi pesanan sudah sampai.",
+  });
+
+  return completedStatus;
+}

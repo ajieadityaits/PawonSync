@@ -1,11 +1,13 @@
-import Link from "next/link";
 import { Check } from "lucide-react";
+import { BuyerConfirmArrivalForm } from "@/components/BuyerConfirmArrivalForm";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { findOrder } from "@/lib/data";
+import { getOrder } from "@/lib/orders";
+
+export const dynamic = "force-dynamic";
 
 export default async function BuyerConfirmArrivalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = findOrder(id);
+  const order = await getOrder(id);
 
   return (
     <MobileAppShell hideBottomNav showBack title="Detail Pesanan">
@@ -21,14 +23,7 @@ export default async function BuyerConfirmArrivalPage({ params }: { params: Prom
             Tiba pukul 10.58 WIB
           </p>
 
-          <div className="mt-7 grid gap-3">
-            <Link className="flex h-12 items-center justify-center rounded-2xl bg-cocoa-800 text-sm font-black text-white" href={`/buyer/orders/${order.id}/review`}>
-              Konfirmasi & Beri Ulasan
-            </Link>
-            <Link className="flex h-12 items-center justify-center rounded-2xl border border-cocoa-100 bg-white text-sm font-black text-cocoa-900" href={`/buyer/orders/${order.id}`}>
-              Nanti Saja
-            </Link>
-          </div>
+          <BuyerConfirmArrivalForm order={order} />
         </article>
       </section>
     </MobileAppShell>

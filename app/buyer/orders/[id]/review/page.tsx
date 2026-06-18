@@ -1,12 +1,14 @@
 import Link from "next/link";
 import { Star } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { findOrder } from "@/lib/data";
+import { getOrder } from "@/lib/orders";
 import { formatDate } from "@/lib/utils";
+
+export const dynamic = "force-dynamic";
 
 export default async function BuyerReviewPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = findOrder(id);
+  const order = await getOrder(id);
 
   return (
     <MobileAppShell hideBottomNav showBack title="Beri Ulasan">

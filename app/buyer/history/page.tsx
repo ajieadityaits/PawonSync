@@ -8,6 +8,8 @@ export const dynamic = "force-dynamic";
 
 export default async function BuyerHistoryPage() {
   const orders = await getOrders();
+  const historyOrders = orders.filter((order) => order.status === "selesai");
+
   return (
     <AppShell role="buyer">
       <header>
@@ -17,7 +19,7 @@ export default async function BuyerHistoryPage() {
       </header>
 
       <section className="mt-6 grid gap-4">
-        {orders.map((order) => (
+        {historyOrders.length ? historyOrders.map((order) => (
           <article className="rounded-xl border border-cocoa-100 bg-white p-4 shadow-soft" key={order.id}>
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -33,7 +35,11 @@ export default async function BuyerHistoryPage() {
               </Button>
             </div>
           </article>
-        ))}
+        )) : (
+          <article className="rounded-xl border border-cocoa-100 bg-white p-5 text-sm font-semibold text-cocoa-500 shadow-soft">
+            Pesanan yang sudah selesai akan masuk ke riwayat ini.
+          </article>
+        )}
       </section>
     </AppShell>
   );
