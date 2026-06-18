@@ -1,0 +1,145 @@
+<!doctype html>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>PawonSync Seller Flow</title>
+<style>
+  :root {
+    color-scheme: light;
+    --bg: #fff8ec;
+    --fg: #24170e;
+    --muted: #745237;
+    --line: #8f6848;
+    --neutral: #ead9c2;
+    --input: #f7c98b;
+    --process: #dbe8d4;
+    --storage: #edf4ea;
+    --external: #ffffff;
+  }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--fg);
+    font:
+      14px/1.4 ui-sans-serif,
+      system-ui,
+      -apple-system,
+      BlinkMacSystemFont,
+      "Segoe UI",
+      sans-serif;
+  }
+  main {
+    max-width: 980px;
+    margin: 32px auto;
+    padding: 0 20px;
+  }
+  svg {
+    width: 100%;
+    height: auto;
+    display: block;
+  }
+  .title {
+    font-size: 22px;
+    font-weight: 750;
+    fill: var(--fg);
+  }
+  .label {
+    font-size: 14px;
+    font-weight: 700;
+    fill: var(--fg);
+  }
+  .small {
+    font-size: 12px;
+    fill: var(--muted);
+  }
+  .node {
+    stroke: var(--line);
+    stroke-width: 1.2;
+    rx: 14;
+  }
+  .neutral {
+    fill: var(--neutral);
+  }
+  .input {
+    fill: var(--input);
+  }
+  .process {
+    fill: var(--process);
+  }
+  .storage {
+    fill: var(--storage);
+  }
+  .external {
+    fill: var(--external);
+  }
+  .edge {
+    stroke: var(--line);
+    stroke-width: 1.7;
+    fill: none;
+  }
+</style>
+<main>
+  <svg viewBox="0 0 940 520" role="img" aria-labelledby="title desc">
+    <title id="title">PawonSync Seller Mobile Flow</title>
+    <desc id="desc">Flow Seller dari dashboard, detail pesanan, update milestone, pengemasan, departure gate, dan dapur.</desc>
+    <defs>
+      <marker id="arrow" markerHeight="8" markerWidth="8" orient="auto" refX="7" refY="4">
+        <path d="M0,0 L8,4 L0,8 Z" fill="#8f6848" />
+      </marker>
+    </defs>
+
+    <text class="title" x="30" y="38">PawonSync Seller Mobile Flow</text>
+    <text class="small" x="30" y="62">Alur hi-fi Seller untuk user testing mobile</text>
+
+    <path class="edge" d="M170 124 H250" marker-end="url(#arrow)" />
+    <path class="edge" d="M390 124 H470" marker-end="url(#arrow)" />
+    <path class="edge" d="M610 124 H690" marker-end="url(#arrow)" />
+    <path class="edge" d="M780 160 V226" marker-end="url(#arrow)" />
+    <path class="edge" d="M690 260 H610" marker-end="url(#arrow)" />
+    <path class="edge" d="M470 260 H390" marker-end="url(#arrow)" />
+    <path class="edge" d="M320 304 V374" marker-end="url(#arrow)" />
+    <path class="edge" d="M390 410 H470" marker-end="url(#arrow)" />
+    <path class="edge" d="M610 410 H690" marker-end="url(#arrow)" />
+    <path class="edge" d="M320 160 V224" marker-end="url(#arrow)" />
+
+    <rect class="node input" x="30" y="88" width="140" height="72" />
+    <text class="label" x="54" y="118">Login Seller</text>
+    <text class="small" x="54" y="140">Pilih role Seller</text>
+
+    <rect class="node process" x="250" y="88" width="140" height="72" />
+    <text class="label" x="274" y="118">Dashboard</text>
+    <text class="small" x="274" y="140">Ringkasan aktif</text>
+
+    <rect class="node process" x="470" y="88" width="140" height="72" />
+    <text class="label" x="494" y="118">Daftar Pesanan</text>
+    <text class="small" x="494" y="140">Hari ini dan mendatang</text>
+
+    <rect class="node external" x="690" y="88" width="160" height="72" />
+    <text class="label" x="714" y="118">Detail Pesanan</text>
+    <text class="small" x="714" y="140">Timeline X-Ray</text>
+
+    <rect class="node input" x="690" y="224" width="160" height="72" />
+    <text class="label" x="714" y="254">Kirim Update</text>
+    <text class="small" x="714" y="276">Milestone + foto</text>
+
+    <rect class="node storage" x="470" y="224" width="140" height="72" />
+    <text class="label" x="494" y="254">Notifikasi</text>
+    <text class="small" x="494" y="276">Terkirim ke buyer</text>
+
+    <rect class="node process" x="250" y="224" width="140" height="80" />
+    <text class="label" x="274" y="254">Checklist</text>
+    <text class="label" x="274" y="274">Pengemasan</text>
+    <text class="small" x="274" y="292">Counter kotak</text>
+
+    <rect class="node input" x="250" y="374" width="140" height="72" />
+    <text class="label" x="274" y="404">Departure</text>
+    <text class="small" x="274" y="426">Kurir berangkat</text>
+
+    <rect class="node process" x="470" y="374" width="140" height="72" />
+    <text class="label" x="494" y="404">Tab Dapur</text>
+    <text class="small" x="494" y="426">Pilih pesanan</text>
+
+    <rect class="node external" x="690" y="374" width="160" height="72" />
+    <text class="label" x="714" y="404">Dummy Plate</text>
+    <text class="small" x="714" y="426">Total bahan</text>
+  </svg>
+</main>
