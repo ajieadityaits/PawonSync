@@ -1,10 +1,15 @@
 import Link from "next/link";
-import { ChefHat } from "lucide-react";
+import { ArrowLeft, ChefHat } from "lucide-react";
 
 export default function RoleSelectionPage() {
   return (
     <main className="min-h-screen bg-[linear-gradient(180deg,#fffbea_0%,#dff3d2_100%)] lg:grid lg:place-items-center lg:py-8">
       <section className="flex min-h-screen w-full flex-col bg-cream-50 px-5 py-8 lg:min-h-[820px] lg:max-w-[430px] lg:rounded-[28px] lg:border lg:border-cocoa-100 lg:bg-white lg:shadow-soft">
+        <Link className="inline-flex w-fit items-center gap-2 text-sm font-black text-cocoa-700 hover:text-orange-700" href="/">
+          <ArrowLeft size={18} />
+          Kembali ke Beranda
+        </Link>
+
         <div className="flex flex-1 flex-col items-center justify-center text-center">
           <div className="grid h-20 w-20 place-items-center rounded-3xl border border-cocoa-100 bg-white text-cocoa-800 shadow-sm">
             <ChefHat size={38} />

@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowLeft, PackageCheck } from "lucide-react";
+import { ArrowLeft, House, PackageCheck } from "lucide-react";
 import { AuthForm } from "@/components/AuthForm";
 
 export default function LoginBuyerPage() {
@@ -11,7 +11,14 @@ export default function LoginBuyerPage() {
             <ArrowLeft size={21} />
           </Link>
           <h1 className="text-base font-black text-cocoa-900">Masuk — Pembeli</h1>
-          <div className="h-10 w-10" />
+          <Link
+            aria-label="Kembali ke Beranda"
+            className="grid h-10 w-10 place-items-center rounded-full text-cocoa-800 hover:bg-cream-100"
+            href="/"
+            title="Kembali ke Beranda"
+          >
+            <House size={20} />
+          </Link>
         </header>
 
         <div className="px-5 py-7">
