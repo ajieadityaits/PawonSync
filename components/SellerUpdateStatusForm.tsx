@@ -11,20 +11,29 @@ import { cn } from "@/lib/utils";
 
 export function SellerUpdateStatusForm({ order, sent }: { order: Order; sent?: string }) {
   const router = useRouter();
+  const [currentStatus, setCurrentStatus] = useState(order.status);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const nextStatus = nextOrderStatus(order.status);
-  const canUpdate = order.status !== "selesai";
+  const [showSent, setShowSent] = useState(sent === "1");
+  const nextStatus = nextOrderStatus(currentStatus);
+  const canUpdate = currentStatus !== "selesai";
 
   async function handleUpdate() {
     setErrorMessage("");
     setIsSubmitting(true);
+    setShowSent(false);
+
+    const previousStatus = currentStatus;
+    const targetStatus = nextOrderStatus(currentStatus);
+    setCurrentStatus(targetStatus);
 
     try {
-      await updateOrderToNextStatus(order.id, order.status);
-      router.push(`/seller/orders/${order.id}/update?sent=1`);
-      router.refresh();
+      const savedStatus = await updateOrderToNextStatus(order.id, previousStatus);
+      setCurrentStatus(savedStatus);
+      setShowSent(true);
+      router.replace(`/seller/orders/${order.id}/update?sent=1`);
     } catch (error) {
+      setCurrentStatus(previousStatus);
       setErrorMessage(error instanceof Error ? error.message : "Status pesanan gagal diperbarui.");
     } finally {
       setIsSubmitting(false);
@@ -46,7 +55,7 @@ export function SellerUpdateStatusForm({ order, sent }: { order: Order; sent?: s
         <h2 className="text-xs font-black uppercase text-cocoa-500">Status Pesanan</h2>
         <div className="mt-3 grid gap-3">
           {orderStatuses.map((status) => {
-            const selected = status === order.status;
+            const selected = status === currentStatus;
             const next = status === nextStatus && canUpdate;
             return (
               <div
@@ -106,7 +115,7 @@ export function SellerUpdateStatusForm({ order, sent }: { order: Order; sent?: s
         </Link>
       </section>
 
-      {sent === "1" ? (
+      {showSent ? (
         <div className="fixed inset-0 z-50 grid place-items-center bg-cocoa-900/55 px-7 backdrop-blur-sm">
           <div className="w-full rounded-2xl bg-white p-7 text-center shadow-soft">
             <div className="mx-auto grid h-16 w-16 place-items-center rounded-full bg-cocoa-900 text-white">

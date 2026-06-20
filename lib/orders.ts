@@ -179,22 +179,34 @@ export async function updateOrderToNextStatus(id: string, currentStatus: OrderSt
   }
 
   const nextStatus = nextOrderStatus(currentStatus);
-  const { error } = await supabase.from("orders").update({ status: nextStatus }).eq("id", id);
+  const { data, error } = await supabase.from("orders").update({ status: nextStatus }).eq("id", id).select(orderFields).single();
 
   if (error) throw friendlyOrderError(error);
 
-  await supabase.from("order_status_logs").insert({
-    order_id: id,
-    status: nextStatus,
-    description: `Status diubah menjadi ${statusMeta[nextStatus].label}`,
-  });
+  const order = mapDbOrder(data as DbOrder);
+  const sideEffects = await Promise.allSettled([
+    supabase.from("order_status_logs").insert({
+      order_id: id,
+      status: nextStatus,
+      description: `Status diubah menjadi ${statusMeta[nextStatus].label}`,
+    }),
+    createBuyerNotification({
+      orderId: id,
+      buyerId: order.buyerId,
+      title: `${order.eventName} diperbarui`,
+      description: `Status pesanan berubah menjadi ${statusMeta[nextStatus].label}.`,
+    }),
+  ]);
 
-  const order = await getOrder(id);
-  await createBuyerNotification({
-    orderId: id,
-    buyerId: order.buyerId,
-    title: `${order.eventName} diperbarui`,
-    description: `Status pesanan berubah menjadi ${statusMeta[nextStatus].label}.`,
+  sideEffects.forEach((result) => {
+    if (result.status === "rejected") {
+      console.warn("Status pesanan tersimpan, tetapi log/notifikasi gagal dibuat:", result.reason);
+      return;
+    }
+
+    if (result.value && "error" in result.value && result.value.error) {
+      console.warn("Status pesanan tersimpan, tetapi log gagal dibuat:", result.value.error.message);
+    }
   });
 
   return nextStatus;
