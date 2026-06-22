@@ -83,6 +83,31 @@ create policy "Users can update their own profile"
   using (auth.uid() = user_id)
   with check (auth.uid() = user_id);
 
+drop policy if exists "Prototype can read menus" on public.menus;
+create policy "Prototype can read menus"
+  on public.menus
+  for select
+  using (true);
+
+drop policy if exists "Prototype can create menus" on public.menus;
+create policy "Prototype can create menus"
+  on public.menus
+  for insert
+  with check (true);
+
+drop policy if exists "Prototype can update menus" on public.menus;
+create policy "Prototype can update menus"
+  on public.menus
+  for update
+  using (true)
+  with check (true);
+
+drop policy if exists "Prototype can delete menus" on public.menus;
+create policy "Prototype can delete menus"
+  on public.menus
+  for delete
+  using (true);
+
 drop policy if exists "Prototype can read orders" on public.orders;
 create policy "Prototype can read orders"
   on public.orders
@@ -101,6 +126,12 @@ create policy "Prototype can update orders"
   for update
   using (true)
   with check (true);
+
+drop policy if exists "Prototype can delete orders" on public.orders;
+create policy "Prototype can delete orders"
+  on public.orders
+  for delete
+  using (true);
 
 drop policy if exists "Prototype can read order logs" on public.order_status_logs;
 create policy "Prototype can read order logs"

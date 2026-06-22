@@ -277,3 +277,13 @@ export async function markOrderDeparted(id: string, currentStatus: OrderStatus) 
 
   return departedStatus;
 }
+
+export async function deleteOrder(id: string) {
+  if (!isSupabaseConfigured) {
+    throw new Error("Supabase belum dikonfigurasi, jadi riwayat pesanan belum bisa dihapus permanen.");
+  }
+
+  const { error } = await supabase.from("orders").delete().eq("id", id);
+
+  if (error) throw friendlyOrderError(error);
+}
