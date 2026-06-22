@@ -10,7 +10,7 @@ import {
 import { createBuyerNotification } from "./notifications";
 import { isSupabaseConfigured, supabase } from "./supabaseClient";
 
-type DbOrder = {
+export type DbOrder = {
   id: string;
   seller_id: string | null;
   buyer_id: string | null;
@@ -40,7 +40,7 @@ export type BuyerOrderInput = {
   notes?: string;
 };
 
-const orderFields =
+export const orderFields =
   "id,seller_id,buyer_id,event_name,buyer_name,buyer_phone,menu_name,portions,event_date,delivery_time,venue_address,notes,status,estimated_arrival,created_at";
 
 async function withTimeout<T>(request: PromiseLike<T>) {
@@ -62,7 +62,7 @@ function displayTime(value: string) {
   return value.slice(0, 5);
 }
 
-function mapDbOrder(row: DbOrder): Order {
+export function mapDbOrder(row: DbOrder): Order {
   return {
     id: row.id,
     sellerId: row.seller_id ?? sellerProfile.id,
@@ -104,19 +104,17 @@ export async function getOrders() {
 
   if (!result) {
     console.warn("Timeout membaca orders dari Supabase.");
-    return demoOrders;
+    return [];
   }
 
   const { data, error } = result;
 
   if (error) {
     console.warn("Gagal membaca orders dari Supabase:", error.message);
-    return demoOrders;
+    return [];
   }
 
-  const dbOrders = (data ?? []).map((row) => mapDbOrder(row as DbOrder));
-  const dbIds = new Set(dbOrders.map((order) => order.id));
-  return [...dbOrders, ...demoOrders.filter((order) => !dbIds.has(order.id))];
+  return (data ?? []).map((row) => mapDbOrder(row as DbOrder));
 }
 
 export async function getOrder(id: string) {
@@ -128,17 +126,17 @@ export async function getOrder(id: string) {
 
   if (!result) {
     console.warn("Timeout membaca detail order dari Supabase.");
-    return demoOrder ?? demoOrders[0];
+    return undefined;
   }
 
   const { data, error } = result;
 
   if (error) {
     console.warn("Gagal membaca detail order dari Supabase:", error.message);
-    return demoOrder ?? demoOrders[0];
+    return undefined;
   }
 
-  return data ? mapDbOrder(data as DbOrder) : demoOrder ?? demoOrders[0];
+  return data ? mapDbOrder(data as DbOrder) : undefined;
 }
 
 export async function createBuyerOrder(payload: BuyerOrderInput) {
@@ -229,4 +227,53 @@ export async function completeBuyerOrder(id: string) {
   });
 
   return completedStatus;
+}
+
+export async function markOrderDeparted(id: string, currentStatus: OrderStatus) {
+  if (!isSupabaseConfigured) {
+    throw new Error("Supabase belum dikonfigurasi, jadi departure gate belum bisa disimpan.");
+  }
+
+  const departedStatus: OrderStatus = "dikirim";
+  if (currentStatus === "selesai") return departedStatus;
+
+  const { data, error } = await supabase
+    .from("orders")
+    .update({
+      status: departedStatus,
+      estimated_arrival: "Dalam perjalanan",
+    })
+    .eq("id", id)
+    .select(orderFields)
+    .single();
+
+  if (error) throw friendlyOrderError(error);
+
+  const order = mapDbOrder(data as DbOrder);
+  const sideEffects = await Promise.allSettled([
+    supabase.from("order_status_logs").insert({
+      order_id: id,
+      status: departedStatus,
+      description: "Seller mengaktifkan departure gate. Kurir mulai berangkat ke venue.",
+    }),
+    createBuyerNotification({
+      orderId: id,
+      buyerId: order.buyerId,
+      title: `${order.eventName} mulai dikirim`,
+      description: "Kurir sudah berangkat dari dapur menuju venue.",
+    }),
+  ]);
+
+  sideEffects.forEach((result) => {
+    if (result.status === "rejected") {
+      console.warn("Departure gate aktif, tetapi log/notifikasi gagal dibuat:", result.reason);
+      return;
+    }
+
+    if (result.value && "error" in result.value && result.value.error) {
+      console.warn("Departure gate aktif, tetapi log gagal dibuat:", result.value.error.message);
+    }
+  });
+
+  return departedStatus;
 }

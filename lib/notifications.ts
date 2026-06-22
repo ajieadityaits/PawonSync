@@ -19,6 +19,7 @@ export type NotificationInput = {
 };
 
 const notificationFields = "id,order_id,buyer_id,title,description,is_read,created_at";
+const uuidPattern = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 function formatNotificationTime(value: string) {
   const date = new Date(value);
@@ -80,11 +81,10 @@ export async function getBuyerNotifications() {
 
   if (error) {
     console.warn("Gagal membaca notifications dari Supabase:", error.message);
-    return buyerNotifications;
+    return [];
   }
 
-  const notifications = (data ?? []).map((row) => mapDbNotification(row as DbNotification));
-  return notifications.length ? notifications : buyerNotifications;
+  return (data ?? []).map((row) => mapDbNotification(row as DbNotification));
 }
 
 export async function createBuyerNotification(payload: NotificationInput) {
@@ -92,7 +92,7 @@ export async function createBuyerNotification(payload: NotificationInput) {
 
   const { error } = await supabase.from("notifications").insert({
     order_id: payload.orderId,
-    buyer_id: payload.buyerId || null,
+    buyer_id: payload.buyerId && uuidPattern.test(payload.buyerId) ? payload.buyerId : null,
     title: payload.title,
     description: payload.description,
     is_read: false,

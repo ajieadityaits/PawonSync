@@ -66,10 +66,15 @@ export type BuyerNotification = {
 export type MenuItem = {
   id: string;
   name: string;
+  category: string;
   description: string;
   price: number;
   minimumOrder: number;
   imageUrl: string;
+  plateImageUrl: string;
+  prepTime: string;
+  dailyNote: string;
+  portionGuide: Array<{ item: string; amount: string }>;
   isActive: boolean;
 };
 
@@ -150,7 +155,7 @@ export const statusMeta: Record<
 export const sellerNavItems = [
   { label: "Dashboard", href: "/seller/dashboard", icon: LayoutDashboard },
   { label: "Pesanan", href: "/seller/orders", icon: ClipboardList },
-  { label: "Menu", href: "/seller/menu", icon: Soup },
+  { label: "Dapur & Menu", href: "/seller/kitchen", icon: Soup },
   { label: "Jadwal", href: "/seller/schedule", icon: CalendarDays },
   { label: "Profil", href: "/seller/profile", icon: UserRound },
 ];
@@ -158,7 +163,7 @@ export const sellerNavItems = [
 export const sellerMobileNavItems = [
   { label: "Beranda", href: "/seller/dashboard", icon: Home },
   { label: "Pesanan", href: "/seller/orders", icon: ClipboardList },
-  { label: "Dapur", href: "/seller/kitchen", icon: CookingPot },
+  { label: "Dapur & Menu", href: "/seller/kitchen", icon: CookingPot },
   { label: "Profil", href: "/seller/profile", icon: UserRound },
 ];
 
@@ -276,32 +281,85 @@ export const menus: MenuItem[] = [
   {
     id: "menu-1",
     name: "Nasi Box Ayam Bakar",
+    category: "Nasi Box",
     description: "Nasi, ayam bakar madu, lalapan, sambal, tumis sayur, dan buah.",
     price: 28000,
     minimumOrder: 25,
     imageUrl:
       "https://images.unsplash.com/photo-1604908176997-125f25cc6f3d?auto=format&fit=crop&w=900&q=80",
+    plateImageUrl:
+      "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
+    prepTime: "90 menit",
+    dailyNote: "Cek stok ayam marinasi, lalapan, dan sambal sebelum jam 09.00.",
+    portionGuide: [
+      { item: "Nasi", amount: "200 g" },
+      { item: "Ayam bakar", amount: "1 potong (100 g)" },
+      { item: "Tumis sayur", amount: "80 g" },
+      { item: "Sambal", amount: "20 g" },
+      { item: "Buah", amount: "1 cup kecil" },
+    ],
     isActive: true,
   },
   {
     id: "menu-2",
     name: "Paket Prasmanan Hemat",
+    category: "Prasmanan",
     description: "Paket lengkap untuk acara keluarga, kantor, dan komunitas.",
     price: 45000,
     minimumOrder: 80,
     imageUrl:
       "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=80",
+    plateImageUrl:
+      "https://images.unsplash.com/photo-1543352634-a1c51d9f1fa7?auto=format&fit=crop&w=900&q=80",
+    prepTime: "150 menit",
+    dailyNote: "Pastikan chafing dish, sendok saji, dan label menu sudah siap.",
+    portionGuide: [
+      { item: "Nasi putih", amount: "180 g" },
+      { item: "Lauk utama", amount: "120 g" },
+      { item: "Sayur kuah", amount: "120 ml" },
+      { item: "Kerupuk", amount: "2 pcs" },
+      { item: "Air mineral", amount: "1 botol" },
+    ],
     isActive: true,
   },
   {
     id: "menu-3",
     name: "Snack Box Premium",
+    category: "Snack Box",
     description: "Aneka kue basah, pastry mini, air mineral, dan kartu ucapan.",
     price: 18000,
     minimumOrder: 40,
     imageUrl:
       "https://images.unsplash.com/photo-1488477181946-6428a0291777?auto=format&fit=crop&w=900&q=80",
+    plateImageUrl:
+      "https://images.unsplash.com/photo-1509365465985-25d11c17e812?auto=format&fit=crop&w=900&q=80",
+    prepTime: "60 menit",
+    dailyNote: "Pisahkan snack basah dan pastry agar tekstur tetap bagus saat dikirim.",
+    portionGuide: [
+      { item: "Kue basah", amount: "2 pcs" },
+      { item: "Pastry mini", amount: "1 pcs" },
+      { item: "Air mineral", amount: "1 botol" },
+      { item: "Kartu ucapan", amount: "1 lembar" },
+    ],
     isActive: false,
+  },
+];
+
+export const sellerDailyBriefs = [
+  {
+    title: "Stok Dapur",
+    value: "Ayam & beras aman",
+    helper: "Bahan utama cukup untuk 2 pesanan besar hari ini.",
+  },
+  {
+    title: "Prioritas Packing",
+    value: "Menunggu order aktif",
+    helper: "Pesanan dari buyer akan menjadi prioritas begitu masuk ke database.",
+  },
+  {
+    title: "Catatan Buyer",
+    value: "2 catatan khusus",
+    helper: "Ada request sambal dipisah dan alergi kacang.",
   },
 ];
 
@@ -418,6 +476,26 @@ export const kitchenGuide = {
     { item: "Telur", amount: "150 butir" },
   ],
 };
+
+export function findMenuByName(name: string) {
+  return menus.find((menu) => menu.name.toLowerCase() === name.toLowerCase()) ?? menus[0];
+}
+
+export function findMenuById(id: string) {
+  return menus.find((menu) => menu.id === id);
+}
+
+export function getMenuGuideForOrder(order: Pick<Order, "menuName" | "portions">) {
+  const menu = findMenuByName(order.menuName);
+  return {
+    menu,
+    standards: menu.portionGuide,
+    totals: menu.portionGuide.map((item) => ({
+      item: item.item,
+      amount: `${item.amount} x ${order.portions} porsi`,
+    })),
+  };
+}
 
 export const buyerNotifications: BuyerNotification[] = [
   {

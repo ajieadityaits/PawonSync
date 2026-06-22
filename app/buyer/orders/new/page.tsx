@@ -2,7 +2,13 @@ import { PackagePlus } from "lucide-react";
 import { BuyerOrderForm } from "@/components/BuyerOrderForm";
 import { MobileAppShell } from "@/components/MobileAppShell";
 
-export default function BuyerAddOrderPage() {
+export default async function BuyerAddOrderPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ menu?: string }>;
+}) {
+  const { menu } = await searchParams;
+
   return (
     <MobileAppShell showBack title="Tambah Pesanan">
       <section className="px-4 pt-5">
@@ -19,7 +25,7 @@ export default function BuyerAddOrderPage() {
       </section>
 
       <section className="mt-5 px-4">
-        <BuyerOrderForm />
+        <BuyerOrderForm defaultMenu={menu} />
       </section>
     </MobileAppShell>
   );

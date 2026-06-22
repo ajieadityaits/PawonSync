@@ -7,7 +7,7 @@ import { Input } from "@/components/Input";
 import { buyerProfile, menus } from "@/lib/data";
 import { createBuyerOrder } from "@/lib/orders";
 
-export function BuyerOrderForm() {
+export function BuyerOrderForm({ defaultMenu }: { defaultMenu?: string }) {
   const router = useRouter();
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -58,6 +58,7 @@ export function BuyerOrderForm() {
         Menu
         <select
           className="h-12 rounded-lg border border-cocoa-100 bg-white px-4 text-sm text-cocoa-900 shadow-sm outline-none transition focus:border-cocoa-400 focus:ring-4 focus:ring-orange-100"
+          defaultValue={defaultMenu}
           name="menuName"
           required
         >

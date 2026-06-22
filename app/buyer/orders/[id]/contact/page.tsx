@@ -1,11 +1,14 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Info, MessageSquareText, Phone, Store } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { findOrder, sellerProfile } from "@/lib/data";
+import { sellerProfile } from "@/lib/data";
+import { getOrder } from "@/lib/orders";
 
 export default async function BuyerContactSellerPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = findOrder(id);
+  const order = await getOrder(id);
+  if (!order) notFound();
 
   return (
     <MobileAppShell hideBottomNav showBack title="Hubungi Seller">

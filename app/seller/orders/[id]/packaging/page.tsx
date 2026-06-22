@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { MobileAppShell } from "@/components/MobileAppShell";
 import { PackagingCounter } from "@/components/PackagingCounter";
 import { packagingChecklist } from "@/lib/data";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function SellerPackagingPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const order = await getOrder(id);
+  if (!order) notFound();
   const initialPacked = order.id === packagingChecklist.orderId ? Math.min(packagingChecklist.packed, order.portions) : 0;
 
   return (

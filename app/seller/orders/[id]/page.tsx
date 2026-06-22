@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Camera, Clock3, MapPin, PackageCheck, Truck } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
 import { sellerMilestones } from "@/lib/data";
@@ -17,6 +18,7 @@ export const dynamic = "force-dynamic";
 export default async function SellerOrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const order = await getOrder(id);
+  if (!order) notFound();
   const activeIndex = currentMilestoneIndex(order.status);
   const readyToDepart = activeIndex >= 3;
 

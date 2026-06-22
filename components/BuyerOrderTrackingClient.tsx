@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { Camera, CheckCircle2, MessageCircle, PackageCheck } from "lucide-react";
+import { Camera, CheckCircle2, MessageCircle, PackageCheck, Truck } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
 import { orderStatuses, statusMeta, type Order, type OrderStatus } from "@/lib/data";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
@@ -16,6 +16,7 @@ type RealtimeOrderRow = {
 export function BuyerOrderTrackingClient({ initialOrder }: { initialOrder: Order }) {
   const [order, setOrder] = useState(initialOrder);
   const activeIndex = orderStatuses.indexOf(order.status);
+  const isDeparted = order.status === "dikirim" || order.status === "selesai";
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -136,12 +137,19 @@ export function BuyerOrderTrackingClient({ initialOrder }: { initialOrder: Order
           <p className="mt-2 text-xs font-semibold leading-5 text-cocoa-400">
             Estimasi tiba berdasarkan lokasi seller
             <br />
-            Belum berangkat
+            {isDeparted ? "Kurir sedang menuju venue" : "Belum berangkat"}
           </p>
         </article>
       </section>
 
       <section className="mt-5 grid gap-3 px-4">
+        <Link
+          className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-sage-100 bg-sage-50 px-4 text-sm font-black text-sage-800 shadow-sm"
+          href={`/buyer/orders/${order.id}/depart`}
+        >
+          <Truck size={18} />
+          Buka Departure Gate
+        </Link>
         <Link
           className="flex h-12 items-center justify-center gap-2 rounded-2xl border border-cocoa-100 bg-white px-4 text-sm font-black text-cocoa-900 shadow-sm"
           href={`/buyer/orders/${order.id}/contact`}

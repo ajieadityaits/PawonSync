@@ -1,4 +1,5 @@
 import { Check } from "lucide-react";
+import { notFound } from "next/navigation";
 import { BuyerConfirmArrivalForm } from "@/components/BuyerConfirmArrivalForm";
 import { MobileAppShell } from "@/components/MobileAppShell";
 import { getOrder } from "@/lib/orders";
@@ -8,6 +9,7 @@ export const dynamic = "force-dynamic";
 export default async function BuyerConfirmArrivalPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const order = await getOrder(id);
+  if (!order) notFound();
 
   return (
     <MobileAppShell hideBottomNav showBack title="Detail Pesanan">

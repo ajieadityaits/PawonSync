@@ -1,3 +1,4 @@
+import { notFound } from "next/navigation";
 import { SellerUpdateStatusForm } from "@/components/SellerUpdateStatusForm";
 import { getOrder } from "@/lib/orders";
 
@@ -13,6 +14,7 @@ export default async function SellerUpdateMilestonePage({
   const { id } = await params;
   const { sent } = await searchParams;
   const order = await getOrder(id);
+  if (!order) notFound();
 
   return <SellerUpdateStatusForm order={order} sent={sent} />;
 }

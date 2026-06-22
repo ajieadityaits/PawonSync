@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState } from "react";
+import { type ChangeEvent, useState } from "react";
 import { Camera, Check, Info } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { MobileAppShell } from "@/components/MobileAppShell";
 import { orderStatuses, statusMeta, type Order } from "@/lib/data";
 import { nextOrderStatus, updateOrderToNextStatus } from "@/lib/orders";
@@ -15,8 +16,18 @@ export function SellerUpdateStatusForm({ order, sent }: { order: Order; sent?: s
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showSent, setShowSent] = useState(sent === "1");
+  const [proofPhotoName, setProofPhotoName] = useState("");
+  const [proofPhotoUrl, setProofPhotoUrl] = useState("");
   const nextStatus = nextOrderStatus(currentStatus);
   const canUpdate = currentStatus !== "selesai";
+
+  function handlePhotoChange(event: ChangeEvent<HTMLInputElement>) {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    setProofPhotoName(file.name);
+    setProofPhotoUrl(URL.createObjectURL(file));
+  }
 
   async function handleUpdate() {
     setErrorMessage("");
@@ -84,12 +95,35 @@ export function SellerUpdateStatusForm({ order, sent }: { order: Order; sent?: s
 
       <section className="mt-7 px-4">
         <h2 className="text-xs font-black uppercase text-cocoa-500">Foto Bukti (Opsional)</h2>
-        <div className="mt-3 grid h-28 place-items-center rounded-xl border border-dashed border-cocoa-200 bg-white text-cocoa-300">
-          <div className="text-center text-xs font-black uppercase">
-            <Camera className="mx-auto mb-2" size={24} />
-            Tambah Foto
-          </div>
-        </div>
+        <label className="mt-3 block cursor-pointer overflow-hidden rounded-xl border border-dashed border-cocoa-200 bg-white text-cocoa-500">
+          <input
+            accept="image/*"
+            capture="environment"
+            className="sr-only"
+            onChange={handlePhotoChange}
+            type="file"
+          />
+          {proofPhotoUrl ? (
+            <span className="block">
+              <span className="relative block aspect-[4/3] w-full">
+                <Image alt="Preview foto bukti update" className="object-cover" fill sizes="430px" src={proofPhotoUrl} unoptimized />
+              </span>
+              <span className="block px-4 py-3 text-xs font-bold text-cocoa-600">
+                {proofPhotoName}
+              </span>
+            </span>
+          ) : (
+            <span className="grid h-32 place-items-center">
+              <span className="text-center text-xs font-black uppercase">
+                <Camera className="mx-auto mb-2" size={24} />
+                Ambil / Pilih Foto
+                <span className="mt-1 block text-[11px] font-semibold normal-case text-cocoa-400">
+                  Kamera mobile akan terbuka jika perangkat mendukung.
+                </span>
+              </span>
+            </span>
+          )}
+        </label>
       </section>
 
       {errorMessage ? (

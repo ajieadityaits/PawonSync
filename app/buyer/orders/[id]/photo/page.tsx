@@ -1,13 +1,16 @@
 import Image from "next/image";
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Camera, Info } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { findOrder, progressPhotos } from "@/lib/data";
+import { progressPhotos } from "@/lib/data";
+import { getOrder } from "@/lib/orders";
 import { cn } from "@/lib/utils";
 
 export default async function BuyerProgressPhotoPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const order = findOrder(id);
+  const order = await getOrder(id);
+  if (!order) notFound();
   const photos = progressPhotos.filter((photo) => photo.orderId === order.id);
   const featuredPhoto = photos.find((photo) => photo.isAvailable);
 

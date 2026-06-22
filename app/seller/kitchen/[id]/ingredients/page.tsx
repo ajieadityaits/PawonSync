@@ -1,7 +1,8 @@
 import Link from "next/link";
+import { notFound } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { kitchenGuide } from "@/lib/data";
+import { getMenuGuideForOrder } from "@/lib/data";
 import { getOrder } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
@@ -9,10 +10,13 @@ export const dynamic = "force-dynamic";
 export default async function SellerIngredientsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
   const order = await getOrder(id);
+  if (!order) notFound();
+  const guide = getMenuGuideForOrder(order);
 
   return (
     <MobileAppShell role="seller" hideBottomNav showBack title="Total Bahan">
       <section className="px-4 pt-7 text-center">
+        <p className="text-xs font-black uppercase text-orange-700">{guide.menu.name}</p>
         <h2 className="text-xs font-black uppercase text-cocoa-500">Jumlah Porsi</h2>
         <div className="mt-4 grid grid-cols-[48px_1fr_48px] items-center gap-4">
           <button className="grid h-11 w-11 place-items-center rounded-full border border-cocoa-900 bg-white text-cocoa-900" type="button">
@@ -31,7 +35,7 @@ export default async function SellerIngredientsPage({ params }: { params: Promis
       <section className="mt-7 border-t border-cocoa-100 px-4 pt-5">
         <h2 className="text-xs font-black uppercase text-cocoa-500">Total Bahan yang Harus Disiapkan</h2>
         <div className="mt-4 divide-y divide-cocoa-100 rounded-2xl bg-white px-4 shadow-sm">
-          {kitchenGuide.totals.map((item) => (
+          {guide.totals.map((item) => (
             <div className="flex items-center justify-between py-4 text-sm" key={item.item}>
               <span className="font-semibold text-cocoa-700">{item.item}</span>
               <span className="font-black text-cocoa-900">{item.amount}</span>

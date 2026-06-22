@@ -1,18 +1,20 @@
-import { AppShell } from "@/components/AppShell";
+import { MobileAppShell } from "@/components/MobileAppShell";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
 import { orderStatuses, statusMeta } from "@/lib/data";
 
 export default function SellerAddOrderPage() {
   return (
-    <AppShell role="seller">
-      <header>
+    <MobileAppShell role="seller" showBack title="Input Pesanan">
+      <section className="px-4 pt-5">
         <p className="text-sm font-black uppercase text-orange-700">Tambah Pesanan</p>
-        <h1 className="mt-1 text-3xl font-black text-cocoa-900">Input pesanan katering</h1>
-        <p className="mt-2 text-cocoa-500">Lengkapi informasi buyer, menu, jadwal, dan catatan khusus.</p>
-      </header>
+        <h1 className="mt-1 text-2xl font-black text-cocoa-900">Input pesanan katering</h1>
+        <p className="mt-2 text-sm font-semibold leading-6 text-cocoa-500">
+          Lengkapi informasi buyer, menu, jadwal, dan catatan khusus.
+        </p>
+      </section>
 
-      <form className="mt-6 grid gap-4 rounded-xl border border-cocoa-100 bg-white p-5 shadow-soft">
+      <form className="mx-4 mt-5 grid gap-4 rounded-2xl border border-cocoa-100 bg-white p-5 shadow-sm">
         <div className="grid gap-4 sm:grid-cols-2">
           <Input label="Nama buyer" placeholder="Diana" />
           <Input label="No. HP buyer" placeholder="081234567890" />
@@ -44,6 +46,6 @@ export default function SellerAddOrderPage() {
           </Button>
         </div>
       </form>
-    </AppShell>
+    </MobileAppShell>
   );
 }
