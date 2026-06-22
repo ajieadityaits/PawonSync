@@ -3,12 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Camera, ChevronRight, Utensils } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { findMenuById } from "@/lib/data";
+import { getMenu } from "@/lib/menus";
 import { formatCurrency } from "@/lib/utils";
 
 export default async function SellerMenuPlatePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const menu = findMenuById(id);
+  const menu = await getMenu(id);
 
   if (!menu) notFound();
 

@@ -2,9 +2,10 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { Camera, ChevronRight, Edit3, Info, PackagePlus, Soup, Utensils } from "lucide-react";
-import { menus, type Order } from "@/lib/data";
+import { FormEvent, useEffect, useState } from "react";
+import { Camera, ChevronRight, Edit3, Info, PackagePlus, Soup, Utensils, X } from "lucide-react";
+import { menus as demoMenus, type MenuItem, type Order } from "@/lib/data";
+import { createMenu, getMenus } from "@/lib/menus";
 import { mapDbOrder, orderFields, type DbOrder } from "@/lib/orders";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -15,8 +16,13 @@ function sortOrders(orders: Order[]) {
 
 export function SellerKitchenClient({ initialOrders }: { initialOrders: Order[] }) {
   const [orders, setOrders] = useState(() => sortOrders(initialOrders));
-  const [activeMenuCount, setActiveMenuCount] = useState(() => menus.filter((menu) => menu.isActive).length);
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(demoMenus);
+  const [isAddingMenu, setIsAddingMenu] = useState(false);
+  const [isSubmittingMenu, setIsSubmittingMenu] = useState(false);
+  const [menuError, setMenuError] = useState("");
+  const [menuSuccess, setMenuSuccess] = useState("");
   const kitchenOrders = orders.filter((order) => order.status !== "selesai");
+  const activeMenuCount = menuItems.filter((menu) => menu.isActive).length;
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -27,12 +33,8 @@ export function SellerKitchenClient({ initialOrders }: { initialOrders: Order[] 
     }
 
     async function fetchMenus() {
-      const { count, error } = await supabase
-        .from("menus")
-        .select("id", { count: "exact", head: true })
-        .eq("is_active", true);
-
-      if (!error && typeof count === "number") setActiveMenuCount(count);
+      const nextMenus = await getMenus();
+      setMenuItems(nextMenus);
     }
 
     const channel = supabase
@@ -60,6 +62,38 @@ export function SellerKitchenClient({ initialOrders }: { initialOrders: Order[] 
       void supabase.removeChannel(menuChannel);
     };
   }, []);
+
+  async function handleCreateMenu(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    setMenuError("");
+    setMenuSuccess("");
+    setIsSubmittingMenu(true);
+
+    const form = event.currentTarget;
+    const formData = new FormData(form);
+    const price = Number(formData.get("price"));
+    const minimumOrder = Number(formData.get("minimumOrder"));
+
+    try {
+      const menu = await createMenu({
+        name: String(formData.get("name") ?? ""),
+        description: String(formData.get("description") ?? ""),
+        price,
+        minimumOrder,
+        imageUrl: String(formData.get("imageUrl") ?? ""),
+        isActive: formData.get("isActive") === "on",
+      });
+
+      setMenuItems((current) => [menu, ...current.filter((item) => item.id !== menu.id)]);
+      setMenuSuccess(`${menu.name} berhasil ditambahkan.`);
+      form.reset();
+      setIsAddingMenu(false);
+    } catch (error) {
+      setMenuError(error instanceof Error ? error.message : "Menu gagal ditambahkan.");
+    } finally {
+      setIsSubmittingMenu(false);
+    }
+  }
 
   return (
     <>
@@ -123,13 +157,121 @@ export function SellerKitchenClient({ initialOrders }: { initialOrders: Order[] 
       <section className="mt-7 border-t border-cocoa-100 px-4 pt-6">
         <div className="flex items-center justify-between">
           <h2 className="text-xs font-black uppercase text-cocoa-500">Menu Management</h2>
-          <button className="inline-flex h-9 items-center gap-2 rounded-xl bg-cocoa-900 px-3 text-xs font-black text-white" type="button">
+          <button
+            className="inline-flex h-9 items-center gap-2 rounded-xl bg-cocoa-900 px-3 text-xs font-black text-white"
+            onClick={() => {
+              setIsAddingMenu((value) => !value);
+              setMenuError("");
+              setMenuSuccess("");
+            }}
+            type="button"
+          >
             <PackagePlus size={15} />
             Tambah
           </button>
         </div>
+
+        {isAddingMenu ? (
+          <form className="mt-3 grid gap-3 rounded-2xl border border-cocoa-100 bg-white p-4 shadow-sm" onSubmit={handleCreateMenu}>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="text-sm font-black text-cocoa-900">Tambah Menu Baru</p>
+                <p className="mt-1 text-xs font-semibold leading-5 text-cocoa-500">Menu tersimpan ke tabel menus Supabase dan tampil realtime.</p>
+              </div>
+              <button
+                aria-label="Tutup form tambah menu"
+                className="grid h-8 w-8 shrink-0 place-items-center rounded-full bg-cream-50 text-cocoa-700"
+                onClick={() => setIsAddingMenu(false)}
+                type="button"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <label className="grid gap-2 text-xs font-black uppercase text-cocoa-500">
+              Nama menu
+              <input
+                className="h-11 rounded-xl border border-cocoa-100 bg-white px-3 text-sm font-semibold normal-case text-cocoa-900 outline-none focus:border-cocoa-400 focus:ring-4 focus:ring-orange-100"
+                name="name"
+                placeholder="Contoh: Nasi Box Ayam Bakar"
+                required
+              />
+            </label>
+
+            <label className="grid gap-2 text-xs font-black uppercase text-cocoa-500">
+              Deskripsi / catatan dapur
+              <textarea
+                className="min-h-24 rounded-xl border border-cocoa-100 bg-white px-3 py-3 text-sm font-semibold normal-case text-cocoa-900 outline-none placeholder:text-cocoa-300 focus:border-cocoa-400 focus:ring-4 focus:ring-orange-100"
+                name="description"
+                placeholder="Isi menu, catatan produksi, atau detail paket."
+              />
+            </label>
+
+            <div className="grid gap-3 sm:grid-cols-2">
+              <label className="grid gap-2 text-xs font-black uppercase text-cocoa-500">
+                Harga per porsi
+                <input
+                  className="h-11 rounded-xl border border-cocoa-100 bg-white px-3 text-sm font-semibold normal-case text-cocoa-900 outline-none focus:border-cocoa-400 focus:ring-4 focus:ring-orange-100"
+                  min={0}
+                  name="price"
+                  placeholder="28000"
+                  required
+                  type="number"
+                />
+              </label>
+
+              <label className="grid gap-2 text-xs font-black uppercase text-cocoa-500">
+                Minimal order
+                <input
+                  className="h-11 rounded-xl border border-cocoa-100 bg-white px-3 text-sm font-semibold normal-case text-cocoa-900 outline-none focus:border-cocoa-400 focus:ring-4 focus:ring-orange-100"
+                  min={1}
+                  name="minimumOrder"
+                  placeholder="25"
+                  required
+                  type="number"
+                />
+              </label>
+            </div>
+
+            <label className="grid gap-2 text-xs font-black uppercase text-cocoa-500">
+              URL gambar menu
+              <input
+                className="h-11 rounded-xl border border-cocoa-100 bg-white px-3 text-sm font-semibold normal-case text-cocoa-900 outline-none focus:border-cocoa-400 focus:ring-4 focus:ring-orange-100"
+                name="imageUrl"
+                placeholder="https://..."
+                type="url"
+              />
+            </label>
+
+            <label className="flex min-h-11 items-center justify-between gap-3 rounded-xl border border-cocoa-100 bg-cream-50 px-3 text-sm font-black text-cocoa-800">
+              Menu aktif
+              <input className="h-5 w-5 accent-cocoa-800" defaultChecked name="isActive" type="checkbox" />
+            </label>
+
+            {menuError ? (
+              <p className="rounded-xl border border-red-200 bg-red-50 px-3 py-3 text-xs font-semibold leading-5 text-red-700">{menuError}</p>
+            ) : null}
+            {menuSuccess ? (
+              <p className="rounded-xl border border-sage-100 bg-sage-50 px-3 py-3 text-xs font-semibold leading-5 text-sage-800">{menuSuccess}</p>
+            ) : null}
+
+            <button
+              className="flex h-11 items-center justify-center gap-2 rounded-xl bg-cocoa-900 px-4 text-sm font-black text-white disabled:opacity-60"
+              disabled={isSubmittingMenu}
+              type="submit"
+            >
+              <PackagePlus size={16} />
+              {isSubmittingMenu ? "Menyimpan..." : "Simpan Menu"}
+            </button>
+          </form>
+        ) : null}
+
+        {menuSuccess && !isAddingMenu ? (
+          <p className="mt-3 rounded-xl border border-sage-100 bg-sage-50 px-3 py-3 text-xs font-semibold leading-5 text-sage-800">{menuSuccess}</p>
+        ) : null}
+
         <div className="mt-3 grid gap-3">
-          {menus.map((menu) => (
+          {menuItems.map((menu) => (
             <article className="overflow-hidden rounded-2xl border border-cocoa-100 bg-white shadow-sm" key={menu.id}>
               <div className="grid grid-cols-[96px_1fr] gap-3 p-3">
                 <div className="relative h-24 overflow-hidden rounded-xl bg-cream-50">
@@ -176,7 +318,7 @@ export function SellerKitchenClient({ initialOrders }: { initialOrders: Order[] 
         <div className="rounded-xl border border-cocoa-100 bg-white p-4 text-xs font-semibold leading-5 text-cocoa-600 shadow-sm">
           <p className="flex items-start gap-2">
             <Info className="mt-0.5 shrink-0" size={16} />
-            Untuk prototype, menu masih memakai data lokal. Order dapur sudah realtime dari tabel orders Supabase.
+            Menu management tersambung ke tabel menus Supabase. Jika tabel database masih kosong, tampilan memakai contoh menu lokal.
           </p>
         </div>
       </section>

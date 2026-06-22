@@ -3,9 +3,10 @@
 import { useRouter } from "next/navigation";
 import { LogOut } from "lucide-react";
 import { signOut } from "@/lib/auth";
+import { cn } from "@/lib/utils";
 import { Button } from "./Button";
 
-export function SignOutButton() {
+export function SignOutButton({ className }: { className?: string }) {
   const router = useRouter();
 
   async function handleSignOut() {
@@ -14,7 +15,7 @@ export function SignOutButton() {
   }
 
   return (
-    <Button icon={<LogOut size={18} />} onClick={handleSignOut} variant="danger">
+    <Button className={cn(className)} icon={<LogOut size={18} />} onClick={handleSignOut} variant="danger">
       Keluar
     </Button>
   );

@@ -1,16 +1,40 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { FormEvent, useState } from "react";
+import { FormEvent, useEffect, useState } from "react";
 import { Button } from "@/components/Button";
 import { Input } from "@/components/Input";
-import { buyerProfile, menus } from "@/lib/data";
+import { buyerProfile, menus as demoMenus } from "@/lib/data";
+import { getMenus } from "@/lib/menus";
 import { createBuyerOrder } from "@/lib/orders";
+import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 
 export function BuyerOrderForm({ defaultMenu }: { defaultMenu?: string }) {
   const router = useRouter();
+  const [menuItems, setMenuItems] = useState(demoMenus);
   const [errorMessage, setErrorMessage] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!isSupabaseConfigured) return;
+
+    async function fetchMenus() {
+      setMenuItems(await getMenus());
+    }
+
+    const channel = supabase
+      .channel("buyer-order-form-menus")
+      .on("postgres_changes", { event: "*", schema: "public", table: "menus" }, () => {
+        void fetchMenus();
+      })
+      .subscribe();
+
+    void fetchMenus();
+
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, []);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,7 +86,7 @@ export function BuyerOrderForm({ defaultMenu }: { defaultMenu?: string }) {
           name="menuName"
           required
         >
-          {menus.filter((menu) => menu.isActive).map((menu) => (
+          {menuItems.filter((menu) => menu.isActive).map((menu) => (
             <option key={menu.id} value={menu.name}>
               {menu.name}
             </option>

@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { ChevronRight, ClipboardList, CookingPot, Soup, Sparkles } from "lucide-react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { menus, sellerDailyBriefs, sellerProfile, type Order } from "@/lib/data";
+import { menus as demoMenus, sellerDailyBriefs, sellerProfile, type MenuItem, type Order } from "@/lib/data";
+import { getMenus } from "@/lib/menus";
 import { mapDbOrder, orderFields, type DbOrder } from "@/lib/orders";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 import { formatCurrency, formatDate } from "@/lib/utils";
@@ -16,8 +17,9 @@ function sortOrders(orders: Order[]) {
 
 export function SellerDashboardClient({ initialOrders }: { initialOrders: Order[] }) {
   const [orders, setOrders] = useState(() => sortOrders(initialOrders));
+  const [menuItems, setMenuItems] = useState<MenuItem[]>(demoMenus);
   const newestOrders = orders.slice(0, 3);
-  const activeMenus = menus.filter((menu) => menu.isActive);
+  const activeMenus = menuItems.filter((menu) => menu.isActive);
   const activeCount = orders.filter((order) => order.status !== "selesai").length;
   const shippingToday = orders.filter((order) => order.status === "dikirim").length;
 
@@ -29,6 +31,10 @@ export function SellerDashboardClient({ initialOrders }: { initialOrders: Order[
       if (!error) setOrders(sortOrders((data ?? []).map((row) => mapDbOrder(row as DbOrder))));
     }
 
+    async function fetchMenus() {
+      setMenuItems(await getMenus());
+    }
+
     const channel = supabase
       .channel("seller-dashboard-orders")
       .on("postgres_changes", { event: "*", schema: "public", table: "orders" }, () => {
@@ -36,11 +42,20 @@ export function SellerDashboardClient({ initialOrders }: { initialOrders: Order[
       })
       .subscribe();
 
+    const menuChannel = supabase
+      .channel("seller-dashboard-menus")
+      .on("postgres_changes", { event: "*", schema: "public", table: "menus" }, () => {
+        void fetchMenus();
+      })
+      .subscribe();
+
     const pollingId = window.setInterval(fetchOrders, 6000);
+    void fetchMenus();
 
     return () => {
       window.clearInterval(pollingId);
       void supabase.removeChannel(channel);
+      void supabase.removeChannel(menuChannel);
     };
   }, []);
 
