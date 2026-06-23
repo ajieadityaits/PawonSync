@@ -20,9 +20,13 @@ create table if not exists public.menus (
   price integer not null default 0,
   minimum_order integer not null default 1,
   image_url text,
+  portion_ingredients jsonb not null default '[]'::jsonb,
   is_active boolean not null default true,
   created_at timestamptz not null default now()
 );
+
+alter table public.menus
+  add column if not exists portion_ingredients jsonb not null default '[]'::jsonb;
 
 create table if not exists public.orders (
   id uuid primary key default gen_random_uuid(),

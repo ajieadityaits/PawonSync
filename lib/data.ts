@@ -63,6 +63,17 @@ export type BuyerNotification = {
   createdAt?: string;
 };
 
+export type MenuIngredient = {
+  item: string;
+  quantity: number;
+  unit: string;
+};
+
+export type MenuPortionGuide = {
+  item: string;
+  amount: string;
+};
+
 export type MenuItem = {
   id: string;
   name: string;
@@ -74,7 +85,8 @@ export type MenuItem = {
   plateImageUrl: string;
   prepTime: string;
   dailyNote: string;
-  portionGuide: Array<{ item: string; amount: string }>;
+  ingredients: MenuIngredient[];
+  portionGuide: MenuPortionGuide[];
   isActive: boolean;
 };
 
@@ -277,6 +289,55 @@ export const orders: Order[] = [
   },
 ];
 
+function formatQuantity(value: number) {
+  if (!Number.isFinite(value)) return "0";
+
+  return new Intl.NumberFormat("id-ID", {
+    maximumFractionDigits: 2,
+  }).format(value);
+}
+
+export function formatIngredientAmount(ingredient: MenuIngredient) {
+  return `${formatQuantity(ingredient.quantity)} ${ingredient.unit}`.trim();
+}
+
+export function buildPortionGuide(ingredients: MenuIngredient[]): MenuPortionGuide[] {
+  return ingredients.map((ingredient) => ({
+    item: ingredient.item,
+    amount: formatIngredientAmount(ingredient),
+  }));
+}
+
+export function buildIngredientTotals(menu: MenuItem, portions: number) {
+  return menu.ingredients.map((ingredient) => ({
+    item: ingredient.item,
+    amount: `${formatQuantity(ingredient.quantity * portions)} ${ingredient.unit}`.trim(),
+  }));
+}
+
+const nasiBoxIngredients: MenuIngredient[] = [
+  { item: "Nasi", quantity: 200, unit: "g" },
+  { item: "Ayam bakar", quantity: 100, unit: "g" },
+  { item: "Tumis sayur", quantity: 80, unit: "g" },
+  { item: "Sambal", quantity: 20, unit: "g" },
+  { item: "Buah", quantity: 1, unit: "cup kecil" },
+];
+
+const prasmananIngredients: MenuIngredient[] = [
+  { item: "Nasi putih", quantity: 180, unit: "g" },
+  { item: "Lauk utama", quantity: 120, unit: "g" },
+  { item: "Sayur kuah", quantity: 120, unit: "ml" },
+  { item: "Kerupuk", quantity: 2, unit: "pcs" },
+  { item: "Air mineral", quantity: 1, unit: "botol" },
+];
+
+const snackBoxIngredients: MenuIngredient[] = [
+  { item: "Kue basah", quantity: 2, unit: "pcs" },
+  { item: "Pastry mini", quantity: 1, unit: "pcs" },
+  { item: "Air mineral", quantity: 1, unit: "botol" },
+  { item: "Kartu ucapan", quantity: 1, unit: "lembar" },
+];
+
 export const menus: MenuItem[] = [
   {
     id: "menu-1",
@@ -291,13 +352,8 @@ export const menus: MenuItem[] = [
       "https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=900&q=80",
     prepTime: "90 menit",
     dailyNote: "Cek stok ayam marinasi, lalapan, dan sambal sebelum jam 09.00.",
-    portionGuide: [
-      { item: "Nasi", amount: "200 g" },
-      { item: "Ayam bakar", amount: "1 potong (100 g)" },
-      { item: "Tumis sayur", amount: "80 g" },
-      { item: "Sambal", amount: "20 g" },
-      { item: "Buah", amount: "1 cup kecil" },
-    ],
+    ingredients: nasiBoxIngredients,
+    portionGuide: buildPortionGuide(nasiBoxIngredients),
     isActive: true,
   },
   {
@@ -313,13 +369,8 @@ export const menus: MenuItem[] = [
       "https://images.unsplash.com/photo-1543352634-a1c51d9f1fa7?auto=format&fit=crop&w=900&q=80",
     prepTime: "150 menit",
     dailyNote: "Pastikan chafing dish, sendok saji, dan label menu sudah siap.",
-    portionGuide: [
-      { item: "Nasi putih", amount: "180 g" },
-      { item: "Lauk utama", amount: "120 g" },
-      { item: "Sayur kuah", amount: "120 ml" },
-      { item: "Kerupuk", amount: "2 pcs" },
-      { item: "Air mineral", amount: "1 botol" },
-    ],
+    ingredients: prasmananIngredients,
+    portionGuide: buildPortionGuide(prasmananIngredients),
     isActive: true,
   },
   {
@@ -335,12 +386,8 @@ export const menus: MenuItem[] = [
       "https://images.unsplash.com/photo-1509365465985-25d11c17e812?auto=format&fit=crop&w=900&q=80",
     prepTime: "60 menit",
     dailyNote: "Pisahkan snack basah dan pastry agar tekstur tetap bagus saat dikirim.",
-    portionGuide: [
-      { item: "Kue basah", amount: "2 pcs" },
-      { item: "Pastry mini", amount: "1 pcs" },
-      { item: "Air mineral", amount: "1 botol" },
-      { item: "Kartu ucapan", amount: "1 lembar" },
-    ],
+    ingredients: snackBoxIngredients,
+    portionGuide: buildPortionGuide(snackBoxIngredients),
     isActive: false,
   },
 ];
@@ -490,10 +537,7 @@ export function getMenuGuideForOrder(order: Pick<Order, "menuName" | "portions">
   return {
     menu,
     standards: menu.portionGuide,
-    totals: menu.portionGuide.map((item) => ({
-      item: item.item,
-      amount: `${item.amount} x ${order.portions} porsi`,
-    })),
+    totals: buildIngredientTotals(menu, order.portions),
   };
 }
 

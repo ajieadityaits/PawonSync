@@ -2,7 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Minus, Plus } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { getMenuGuideForOrder } from "@/lib/data";
+import { getMenuGuideForOrder } from "@/lib/menus";
 import { getOrder } from "@/lib/orders";
 
 export const dynamic = "force-dynamic";
@@ -11,7 +11,7 @@ export default async function SellerIngredientsPage({ params }: { params: Promis
   const { id } = await params;
   const order = await getOrder(id);
   if (!order) notFound();
-  const guide = getMenuGuideForOrder(order);
+  const guide = await getMenuGuideForOrder(order);
 
   return (
     <MobileAppShell role="seller" hideBottomNav showBack title="Total Bahan">
