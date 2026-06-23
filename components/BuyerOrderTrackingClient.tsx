@@ -1,10 +1,11 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Camera, CheckCircle2, MessageCircle, PackageCheck, Truck } from "lucide-react";
 import { MobileAppShell } from "@/components/MobileAppShell";
-import { orderStatuses, statusMeta, type Order, type OrderStatus } from "@/lib/data";
+import { getLatestAvailableProgressPhoto, getProgressPhotosForOrder, orderStatuses, statusMeta, type Order, type OrderStatus } from "@/lib/data";
 import { isSupabaseConfigured, supabase } from "@/lib/supabaseClient";
 import { cn, formatDate } from "@/lib/utils";
 
@@ -17,6 +18,9 @@ export function BuyerOrderTrackingClient({ initialOrder }: { initialOrder: Order
   const [order, setOrder] = useState(initialOrder);
   const activeIndex = orderStatuses.indexOf(order.status);
   const isDeparted = order.status === "dikirim" || order.status === "selesai";
+  const progressPhotos = getProgressPhotosForOrder(order);
+  const availablePhotos = progressPhotos.filter((photo) => photo.isAvailable);
+  const latestPhoto = getLatestAvailableProgressPhoto(order);
 
   useEffect(() => {
     if (!isSupabaseConfigured) return;
@@ -116,18 +120,66 @@ export function BuyerOrderTrackingClient({ initialOrder }: { initialOrder: Order
           })}
         </div>
 
-        <Link
-          className="mt-1 flex items-center gap-3 rounded-2xl border border-dashed border-cocoa-300 bg-white p-3 text-sm font-semibold text-cocoa-600 transition hover:bg-cream-50"
-          href={`/buyer/orders/${order.id}/photo`}
-        >
-          <span className="grid h-11 w-11 place-items-center rounded-xl bg-cocoa-800 text-white">
-            <Camera size={19} />
-          </span>
-          <span>
-            Foto dikirim seller
-            <span className="block text-xs font-medium text-cocoa-400">Tap untuk lihat semua foto progres</span>
-          </span>
-        </Link>
+        <div className="mt-2 rounded-2xl border border-cocoa-100 bg-white p-3 shadow-sm">
+          <div className="grid grid-cols-[96px_1fr] gap-3">
+            <div className="relative h-24 overflow-hidden rounded-xl bg-sage-50">
+              {latestPhoto?.imageUrl ? (
+                <Image alt={latestPhoto.stage} className="object-cover" fill sizes="96px" src={latestPhoto.imageUrl} />
+              ) : (
+                <div className="grid h-full place-items-center text-cocoa-400">
+                  <Camera size={24} />
+                </div>
+              )}
+            </div>
+            <div className="min-w-0 py-1">
+              <p className="text-[11px] font-black uppercase text-cocoa-500">Foto dari seller</p>
+              <p className="mt-1 truncate text-sm font-black text-cocoa-900">
+                {latestPhoto?.stage ?? "Menunggu foto progress"}
+              </p>
+              <p className="mt-1 line-clamp-2 text-xs font-semibold leading-5 text-cocoa-500">
+                {latestPhoto?.note ?? "Foto akan muncul setelah seller memperbarui status pesanan."}
+              </p>
+              <p className="mt-1 text-[11px] font-bold text-cocoa-400">
+                {availablePhotos.length} dari {progressPhotos.length} tahap tersedia
+              </p>
+            </div>
+          </div>
+
+          <div className="mt-3 grid grid-cols-3 gap-2">
+            {progressPhotos.map((photo) => (
+              <div key={photo.id} className="min-w-0">
+                <div
+                  className={cn(
+                    "relative grid aspect-square place-items-center overflow-hidden rounded-xl border text-cocoa-300",
+                    photo.isAvailable ? "border-cocoa-100 bg-white" : "border-dashed border-cocoa-200 bg-cream-50",
+                  )}
+                >
+                  {photo.imageUrl ? (
+                    <Image alt={photo.stage} className="object-cover" fill sizes="120px" src={photo.imageUrl} />
+                  ) : (
+                    <Camera size={18} />
+                  )}
+                  {photo.isAvailable ? (
+                    <span className="absolute right-1.5 top-1.5 grid h-5 w-5 place-items-center rounded-full bg-cocoa-900 text-white">
+                      <CheckCircle2 size={12} />
+                    </span>
+                  ) : null}
+                </div>
+                <p className={cn("mt-1 truncate text-center text-[10px] font-black", photo.isAvailable ? "text-cocoa-700" : "text-cocoa-300")}>
+                  {photo.title}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          <Link
+            className="mt-3 flex h-11 items-center justify-center gap-2 rounded-xl bg-cocoa-800 px-3 text-xs font-black text-white transition hover:bg-cocoa-900"
+            href={`/buyer/orders/${order.id}/photo`}
+          >
+            <Camera size={16} />
+            Lihat Semua Foto Progres
+          </Link>
+        </div>
       </section>
 
       <section className="mt-6 px-4">

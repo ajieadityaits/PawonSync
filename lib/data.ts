@@ -46,8 +46,10 @@ export type Order = {
 export type ProgressPhoto = {
   id: string;
   orderId: string;
+  status: OrderStatus;
   title: string;
   stage: string;
+  note: string;
   time: string;
   imageUrl: string;
   isAvailable: boolean;
@@ -453,8 +455,10 @@ export const progressPhotos: ProgressPhoto[] = [
   {
     id: "photo-1",
     orderId: "ord-1",
+    status: "diproses",
     title: "Bahan Siap",
     stage: "Bahan siap dimasak",
+    note: "Bahan utama sudah dicek, ditimbang, dan siap masuk dapur.",
     time: "09.30 WIB",
     imageUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80",
     isAvailable: true,
@@ -462,8 +466,10 @@ export const progressPhotos: ProgressPhoto[] = [
   {
     id: "photo-2",
     orderId: "ord-1",
+    status: "dikemas",
     title: "Dikemas",
     stage: "Nasi box sedang dikemas",
+    note: "Porsi pesanan sudah masuk kotak dan sedang dicek ulang.",
     time: "10.15 WIB",
     imageUrl: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=80",
     isAvailable: true,
@@ -471,13 +477,114 @@ export const progressPhotos: ProgressPhoto[] = [
   {
     id: "photo-3",
     orderId: "ord-1",
+    status: "dikirim",
     title: "Diantar",
     stage: "Menunggu foto pengantaran",
+    note: "Foto pengantaran akan muncul saat seller mengirim pesanan.",
     time: "Belum ada",
     imageUrl: "",
     isAvailable: false,
   },
 ];
+
+const progressPhotoTemplates: Array<
+  Pick<ProgressPhoto, "status" | "title" | "stage" | "note" | "imageUrl"> & { offsetMinutes: number }
+> = [
+  {
+    status: "pesanan_masuk",
+    title: "Order Diterima",
+    stage: "Detail pesanan diterima seller",
+    note: "Seller sudah menerima detail acara, porsi, alamat, dan catatan buyer.",
+    offsetMinutes: 0,
+    imageUrl: "https://images.unsplash.com/photo-1556911220-bff31c812dba?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    status: "diproses",
+    title: "Bahan Dicek",
+    stage: "Bahan dan perlengkapan disiapkan",
+    note: "Tim dapur mengecek bahan utama, kemasan, dan kebutuhan tambahan.",
+    offsetMinutes: 8,
+    imageUrl: "https://images.unsplash.com/photo-1542838132-92c53300491e?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    status: "dimasak",
+    title: "Dimasak",
+    stage: "Menu pesanan sedang dimasak",
+    note: "Proses memasak berjalan sesuai menu dan jumlah porsi pesanan.",
+    offsetMinutes: 22,
+    imageUrl: "https://images.unsplash.com/photo-1556910103-1c02745aae4d?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    status: "dikemas",
+    title: "Dikemas",
+    stage: "Pesanan sedang dikemas",
+    note: "Setiap porsi dimasukkan ke kemasan dan dicek sebelum dikirim.",
+    offsetMinutes: 38,
+    imageUrl: "https://images.unsplash.com/photo-1512058564366-18510be2db19?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    status: "dikirim",
+    title: "Dikirim",
+    stage: "Pesanan dibawa menuju venue",
+    note: "Kurir membawa pesanan dari lokasi seller ke alamat acara buyer.",
+    offsetMinutes: 50,
+    imageUrl: "https://images.unsplash.com/photo-1580674285054-bed31e145f59?auto=format&fit=crop&w=900&q=80",
+  },
+  {
+    status: "selesai",
+    title: "Selesai",
+    stage: "Pesanan diterima buyer",
+    note: "Pesanan sudah sampai dan dapat dikonfirmasi oleh buyer.",
+    offsetMinutes: 70,
+    imageUrl: "https://images.unsplash.com/photo-1555244162-803834f70033?auto=format&fit=crop&w=900&q=80",
+  },
+];
+
+function buildProgressPhotoTime(deliveryTime: string, offsetMinutes: number) {
+  const match = deliveryTime.match(/(\d{1,2})[:.](\d{2})/);
+  if (!match) return deliveryTime.includes("WIB") ? deliveryTime : `${deliveryTime} WIB`;
+
+  const hours = Number(match[1]);
+  const minutes = Number(match[2]);
+  if (!Number.isFinite(hours) || !Number.isFinite(minutes)) return `${deliveryTime} WIB`;
+
+  const date = new Date(2026, 0, 1, hours, minutes + offsetMinutes);
+  const time = new Intl.DateTimeFormat("id-ID", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hour12: false,
+  }).format(date);
+
+  return `${time.replace(".", ":")} WIB`;
+}
+
+export function getProgressPhotosForOrder(order: Pick<Order, "id" | "status" | "deliveryTime">) {
+  const activeIndex = Math.max(orderStatuses.indexOf(order.status), 0);
+  const customPhotos = progressPhotos.filter((photo) => photo.orderId === order.id);
+
+  return progressPhotoTemplates.map((template, index) => {
+    const customPhoto = customPhotos.find((photo) => photo.status === template.status);
+    const isAvailable = index <= activeIndex;
+
+    return {
+      id: customPhoto?.id ?? `${order.id}-${template.status}-photo`,
+      orderId: order.id,
+      status: template.status,
+      title: customPhoto?.title ?? template.title,
+      stage: customPhoto?.stage ?? template.stage,
+      note: customPhoto?.note ?? template.note,
+      time: isAvailable ? customPhoto?.time ?? buildProgressPhotoTime(order.deliveryTime, template.offsetMinutes) : "Belum tersedia",
+      imageUrl: isAvailable ? customPhoto?.imageUrl || template.imageUrl : "",
+      isAvailable,
+    };
+  });
+}
+
+export function getLatestAvailableProgressPhoto(order: Pick<Order, "id" | "status" | "deliveryTime">) {
+  return getProgressPhotosForOrder(order)
+    .filter((photo) => photo.isAvailable)
+    .at(-1);
+}
 
 export const sellerMilestones = [
   {
